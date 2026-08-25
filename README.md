@@ -22,7 +22,7 @@ The current version includes:
 - Finite-difference validation of every Greek
 - Analytical and Monte Carlo put-call parity tests
 - Monte Carlo convergence analysis
-- Empirical verification of the expected \(N^{-1/2}\) standard-error scaling
+- Empirical verification of the expected $N^{-1/2}$ standard-error scaling
 - Automated tests and code-quality checks
 
 ## Mathematical Model
@@ -46,7 +46,7 @@ S_0
 \qquad Z\sim\mathcal{N}(0,1).
 $$
 
-For European call and put options with strike \(K\), the terminal payoffs are
+For European call and put options with strike $K$, the terminal payoffs are
 
 $$
 \max(S_T-K,0)
@@ -115,7 +115,7 @@ $$
 O(N^{-1/2}).
 $$
 
-The numerical experiment compares the measured standard error against an \(N^{-1/2}\) reference curve, demonstrating the expected convergence behaviour.
+The numerical experiment compares the measured standard error against an $N^{-1/2}$ reference curve, demonstrating the expected convergence behaviour.
 
 ## Analytical Greeks
 
@@ -137,7 +137,7 @@ Sensitivity conventions:
 
 ## Antithetic Variance Reduction
 
-The antithetic estimator draws \(Z\sim\mathcal{N}(0,1)\) and pairs each draw with \(-Z\). This produces the terminal-price pair
+The antithetic estimator draws $Z\sim\mathcal{N}(0,1)$ and pairs each draw with $-Z$. This produces the terminal-price pair:
 
 $$
 S_T^{(+)} =
