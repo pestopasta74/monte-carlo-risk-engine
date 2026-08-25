@@ -1,34 +1,8 @@
-from math import exp, log, sqrt
+from math import exp, sqrt
 
 from scipy.stats import norm
 
-
-def _d1(
-    spot: float,
-    strike: float,
-    rate: float,
-    volatility: float,
-    maturity: float,
-) -> float:
-    return (log(spot / strike) + (rate + 0.5 * volatility**2) * maturity) / (
-        volatility * sqrt(maturity)
-    )
-
-
-def _d2(
-    spot: float,
-    strike: float,
-    rate: float,
-    volatility: float,
-    maturity: float,
-) -> float:
-    return _d1(
-        spot=spot,
-        strike=strike,
-        rate=rate,
-        volatility=volatility,
-        maturity=maturity,
-    ) - volatility * sqrt(maturity)
+from quantmc.pricing.black_scholes import _calculate_d1_d2
 
 
 def european_call_delta(
@@ -40,7 +14,7 @@ def european_call_delta(
 ) -> float:
     """Calculate the Black-Scholes Delta of a European call option."""
 
-    d1 = _d1(
+    d1, _ = _calculate_d1_d2(
         spot=spot,
         strike=strike,
         rate=rate,
@@ -60,7 +34,7 @@ def european_put_delta(
 ) -> float:
     """Calculate the Black-Scholes Delta of a European put option."""
 
-    d1 = _d1(
+    d1, _ = _calculate_d1_d2(
         spot=spot,
         strike=strike,
         rate=rate,
@@ -80,7 +54,7 @@ def european_option_gamma(
 ) -> float:
     """Calculate the Black-Scholes Gamma of a European option."""
 
-    d1 = _d1(
+    d1, _ = _calculate_d1_d2(
         spot=spot,
         strike=strike,
         rate=rate,
@@ -102,7 +76,7 @@ def european_option_vega(
 ) -> float:
     """Calculate the Black-Scholes Vega of a European option."""
 
-    d1 = _d1(
+    d1, _ = _calculate_d1_d2(
         spot=spot,
         strike=strike,
         rate=rate,
@@ -124,14 +98,7 @@ def european_call_theta(
 ) -> float:
     """Calculate the annual Black-Scholes Theta of a European call."""
 
-    d1 = _d1(
-        spot=spot,
-        strike=strike,
-        rate=rate,
-        volatility=volatility,
-        maturity=maturity,
-    )
-    d2 = _d2(
+    d1, d2 = _calculate_d1_d2(
         spot=spot,
         strike=strike,
         rate=rate,
@@ -154,14 +121,7 @@ def european_put_theta(
 ) -> float:
     """Calculate the annual Black-Scholes Theta of a European put."""
 
-    d1 = _d1(
-        spot=spot,
-        strike=strike,
-        rate=rate,
-        volatility=volatility,
-        maturity=maturity,
-    )
-    d2 = _d2(
+    d1, d2 = _calculate_d1_d2(
         spot=spot,
         strike=strike,
         rate=rate,
@@ -184,7 +144,7 @@ def european_call_rho(
 ) -> float:
     """Calculate the Black-Scholes Rho of a European call."""
 
-    d2 = _d2(
+    _, d2 = _calculate_d1_d2(
         spot=spot,
         strike=strike,
         rate=rate,
@@ -206,7 +166,7 @@ def european_put_rho(
 ) -> float:
     """Calculate the Black-Scholes Rho of a European put."""
 
-    d2 = _d2(
+    _, d2 = _calculate_d1_d2(
         spot=spot,
         strike=strike,
         rate=rate,
