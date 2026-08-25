@@ -62,6 +62,7 @@ def test_pricing_comparison_calculates_errors() -> None:
     assert comparison.standard_absolute_error == pytest.approx(0.05)
     assert comparison.antithetic_absolute_error == pytest.approx(0.05)
     assert comparison.standard_error_reduction_factor == pytest.approx(2.0)
+    assert comparison.variance_reduction_factor == pytest.approx(4.0)
 
 
 def test_analyze_european_option_returns_complete_analysis() -> None:

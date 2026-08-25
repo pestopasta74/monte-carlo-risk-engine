@@ -74,6 +74,12 @@ class PricingComparison:
 
         return self.standard_mc.standard_error / self.antithetic_mc.standard_error
 
+    @property
+    def variance_reduction_factor(self) -> float:
+        """Return the standard-to-antithetic variance ratio."""
+
+        return self.standard_error_reduction_factor**2
+
 
 @dataclass(frozen=True)
 class EuropeanOptionAnalysis:
