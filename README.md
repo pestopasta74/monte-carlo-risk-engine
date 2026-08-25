@@ -22,6 +22,7 @@ The current version includes:
 - Finite-difference validation of every Greek
 - Analytical and Monte Carlo put-call parity tests
 - Monte Carlo convergence analysis
+- Unified analytical, standard Monte Carlo, and antithetic comparison engine
 - Empirical verification of the expected $N^{-1/2}$ standard-error scaling
 - Automated tests and code-quality checks
 
@@ -137,7 +138,7 @@ Sensitivity conventions:
 
 ## Antithetic Variance Reduction
 
-The antithetic estimator draws $Z\sim\mathcal{N}(0,1)$ and pairs each draw with $-Z$. This produces the terminal-price pair:
+The antithetic estimator draws $Z\sim\mathcal{N}(0,1)$ and pairs each draw with $-Z$. This produces the terminal-price pair
 
 $$
 S_T^{(+)} =
@@ -162,6 +163,39 @@ The put estimator uses the corresponding put payoffs. Confidence intervals and s
 
 The tests compare standard and antithetic estimators using equal numbers of terminal-price evaluations and verify that the antithetic estimator reduces the standard error for the benchmark call and put options.
 
+## Unified Option Comparison
+
+The comparison engine evaluates one immutable set of European option parameters across:
+
+- analytical Black–Scholes call and put pricing;
+- standard Monte Carlo pricing;
+- antithetic Monte Carlo pricing;
+- absolute pricing errors;
+- estimator standard errors and confidence intervals;
+- standard-error and variance-reduction factors;
+- analytical call and put Greeks.
+
+Standard and antithetic estimators are compared using equal terminal-price evaluation budgets. If the standard estimator uses $N$ simulated prices, the antithetic estimator uses $N/2$ pairs and therefore evaluates the same total number of terminal prices.
+
+### Price convergence
+
+![Standard and antithetic Monte Carlo convergence](docs/figures/variance_reduction_convergence.png)
+
+Both estimators converge towards the analytical Black–Scholes prices. The antithetic estimates fluctuate less around the analytical benchmark, particularly at smaller simulation budgets.
+
+### Standard-error comparison
+
+![Standard versus antithetic Monte Carlo standard error](docs/figures/variance_reduction_standard_error.png)
+
+At an equal budget of 600,000 terminal-price evaluations, the benchmark experiment produced:
+
+| Option | Standard SE | Antithetic SE | SE reduction | Variance reduction |
+| --- | ---: | ---: | ---: | ---: |
+| Call | 0.019017 | 0.013460 | 1.413× | 1.996× |
+| Put | 0.011188 | 0.008564 | 1.306× | 1.707× |
+
+For the benchmark call, antithetic sampling approximately halved the estimator variance. For the benchmark put, it reduced the estimator variance by approximately 41%. Across the tested budgets, both standard and antithetic standard errors retain the expected $N^{-1/2}$ scaling.
+
 ## Project Structure
 
 ```text
@@ -172,13 +206,20 @@ The tests compare standard and antithetic estimators using equal numbers of term
 ├── docs/
 │   └── figures/
 │       ├── monte_carlo_convergence.png
-│       └── standard_error_scaling.png
+│       ├── standard_error_scaling.png
+│       ├── variance_reduction_convergence.png
+│       └── variance_reduction_standard_error.png
 ├── examples/
 │   ├── convergence_analysis.py
-│   └── error_scaling.py
+│   ├── error_scaling.py
+│   ├── option_comparison.py
+│   └── variance_reduction_analysis.py
 ├── src/
 │   └── quantmc/
 │       ├── __init__.py
+│       ├── analysis/
+│       │   ├── __init__.py
+│       │   └── option_comparison.py
 │       ├── models/
 │       │   ├── __init__.py
 │       │   └── geometric_brownian_motion.py
@@ -193,7 +234,8 @@ The tests compare standard and antithetic estimators using equal numbers of term
 │   ├── test_black_scholes.py
 │   ├── test_geometric_brownian_motion.py
 │   ├── test_greeks.py
-│   └── test_monte_carlo.py
+│   ├── test_monte_carlo.py
+│   └── test_option_comparison.py
 ├── .gitignore
 ├── LICENSE
 ├── pyproject.toml
@@ -235,13 +277,24 @@ python examples/convergence_analysis.py
 python examples/error_scaling.py
 ```
 
+Run the unified benchmark comparison:
+
+```bash
+python examples/option_comparison.py
+```
+
+Generate the standard-versus-antithetic comparison figures:
+
+```bash
+python examples/variance_reduction_analysis.py
+```
+
 ## Roadmap
 
 Future development will explore:
 
-- A unified option-comparison and reporting engine
-- Comparative standard-versus-antithetic convergence figures
 - Greek profiles across spot price and other model parameters
+- Exportable comparison tables and reports
 - Value at Risk and Expected Shortfall
 - Additional stochastic models
 - Performance comparisons between numerical approaches
