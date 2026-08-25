@@ -7,8 +7,10 @@ from quantmc.pricing.black_scholes import (
 )
 from quantmc.pricing.monte_carlo import (
     european_call_price_mc,
+    european_call_price_mc_antithetic_stats,
     european_call_price_mc_stats,
     european_put_price_mc,
+    european_put_price_mc_antithetic_stats,
     european_put_price_mc_stats,
 )
 
@@ -122,3 +124,134 @@ def test_point_put_pricer_returns_positive_price() -> None:
     )
 
     assert price > 0.0
+
+
+def test_antithetic_call_matches_black_scholes() -> None:
+    analytical = european_call_price(
+        spot=100.0,
+        strike=100.0,
+        rate=0.05,
+        volatility=0.2,
+        maturity=1.0,
+    )
+
+    result = european_call_price_mc_antithetic_stats(
+        spot=100.0,
+        strike=100.0,
+        rate=0.05,
+        volatility=0.2,
+        maturity=1.0,
+        pairs=250_000,
+        seed=42,
+    )
+
+    lower, upper = result.confidence_interval
+
+    assert lower < analytical < upper
+
+
+def test_antithetic_call_reduces_standard_error() -> None:
+    standard = european_call_price_mc_stats(
+        spot=100.0,
+        strike=100.0,
+        rate=0.05,
+        volatility=0.2,
+        maturity=1.0,
+        simulations=500_000,
+        seed=42,
+    )
+
+    antithetic = european_call_price_mc_antithetic_stats(
+        spot=100.0,
+        strike=100.0,
+        rate=0.05,
+        volatility=0.2,
+        maturity=1.0,
+        pairs=250_000,
+        seed=42,
+    )
+
+    assert antithetic.standard_error < standard.standard_error
+
+
+def test_antithetic_put_matches_black_scholes() -> None:
+    analytical = european_put_price(
+        spot=100.0,
+        strike=100.0,
+        rate=0.05,
+        volatility=0.2,
+        maturity=1.0,
+    )
+
+    result = european_put_price_mc_antithetic_stats(
+        spot=100.0,
+        strike=100.0,
+        rate=0.05,
+        volatility=0.2,
+        maturity=1.0,
+        pairs=250_000,
+        seed=42,
+    )
+
+    lower, upper = result.confidence_interval
+
+    assert lower < analytical < upper
+
+
+def test_antithetic_put_reduces_standard_error() -> None:
+    standard = european_put_price_mc_stats(
+        spot=100.0,
+        strike=100.0,
+        rate=0.05,
+        volatility=0.2,
+        maturity=1.0,
+        simulations=500_000,
+        seed=42,
+    )
+
+    antithetic = european_put_price_mc_antithetic_stats(
+        spot=100.0,
+        strike=100.0,
+        rate=0.05,
+        volatility=0.2,
+        maturity=1.0,
+        pairs=250_000,
+        seed=42,
+    )
+
+    assert antithetic.standard_error < standard.standard_error
+
+
+def test_antithetic_put_call_parity() -> None:
+    spot = 100.0
+    strike = 100.0
+    rate = 0.05
+    volatility = 0.2
+    maturity = 1.0
+
+    call = european_call_price_mc_antithetic_stats(
+        spot=spot,
+        strike=strike,
+        rate=rate,
+        volatility=volatility,
+        maturity=maturity,
+        pairs=250_000,
+        seed=42,
+    )
+
+    put = european_put_price_mc_antithetic_stats(
+        spot=spot,
+        strike=strike,
+        rate=rate,
+        volatility=volatility,
+        maturity=maturity,
+        pairs=250_000,
+        seed=42,
+    )
+
+    theoretical_difference = spot - strike * np.exp(-rate * maturity)
+
+    assert call.price - put.price == pytest.approx(
+        theoretical_difference,
+        abs=0.1,
+    )
