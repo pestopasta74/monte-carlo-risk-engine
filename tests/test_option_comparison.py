@@ -2,7 +2,7 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from quantmc.analysis.option_comparison import (
+from quantmc.analysis import (
     EuropeanOptionAnalysis,
     EuropeanOptionParameters,
     OptionGreeks,
