@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -37,15 +39,20 @@ def main() -> None:
             f"SE={result.standard_error:.4f}"
         )
 
-    standard_errors = np.array(standard_errors)
+    standard_errors_array = np.array(standard_errors)
 
-    reference = standard_errors[0] * np.sqrt(SIMULATION_COUNTS[0] / SIMULATION_COUNTS)
+    reference = standard_errors_array[0] * np.sqrt(
+        SIMULATION_COUNTS[0] / SIMULATION_COUNTS
+    )
+
+    output_dir = Path("docs/figures")
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     plt.figure(figsize=(9, 5))
 
     plt.loglog(
         SIMULATION_COUNTS,
-        standard_errors,
+        standard_errors_array,
         marker="o",
         label="Measured standard error",
     )
@@ -64,7 +71,7 @@ def main() -> None:
     plt.tight_layout()
 
     plt.savefig(
-        "docs/figures/standard_error_scaling.png",
+        output_dir / "standard_error_scaling.png",
         dpi=200,
     )
 
