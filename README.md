@@ -106,6 +106,9 @@ The numerical experiment compares the measured standard error against an \(N^{-1
 
 ```text
 .
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── docs/
 │   └── figures/
 │       ├── monte_carlo_convergence.png
@@ -115,13 +118,22 @@ The numerical experiment compares the measured standard error against an \(N^{-1
 │   └── error_scaling.py
 ├── src/
 │   └── quantmc/
+│       ├── __init__.py
 │       ├── models/
+│       │   ├── __init__.py
 │       │   └── geometric_brownian_motion.py
 │       ├── pricing/
+│       │   ├── __init__.py
 │       │   ├── black_scholes.py
 │       │   └── monte_carlo.py
 │       └── risk/
+│           └── __init__.py
 ├── tests/
+│   ├── test_black_scholes.py
+│   ├── test_geometric_brownian_motion.py
+│   └── test_monte_carlo.py
+├── .gitignore
+├── LICENSE
 ├── pyproject.toml
 └── README.md
 ```
