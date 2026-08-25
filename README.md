@@ -102,6 +102,24 @@ $$
 
 The numerical experiment compares the measured standard error against an \(N^{-1/2}\) reference curve, demonstrating the expected convergence behaviour.
 
+## Analytical Greeks
+
+The project includes analytical Black–Scholes sensitivities for European call and put options:
+
+- Delta
+- Gamma
+- Vega
+- Theta
+- Rho
+
+Each Greek is tested against known benchmark values and independently validated using central finite-difference approximations of the Black–Scholes pricing functions.
+
+Sensitivity conventions:
+
+- Theta is reported per year using the calendar-time convention.
+- Vega is reported per unit change in volatility.
+- Rho is reported per unit change in the continuously compounded risk-free rate.
+
 ## Project Structure
 
 ```text
@@ -125,12 +143,14 @@ The numerical experiment compares the measured standard error against an \(N^{-1
 │       ├── pricing/
 │       │   ├── __init__.py
 │       │   ├── black_scholes.py
+│       │   ├── greeks.py
 │       │   └── monte_carlo.py
 │       └── risk/
 │           └── __init__.py
 ├── tests/
 │   ├── test_black_scholes.py
 │   ├── test_geometric_brownian_motion.py
+│   ├── test_greeks.py
 │   └── test_monte_carlo.py
 ├── .gitignore
 ├── LICENSE
@@ -177,8 +197,6 @@ python examples/error_scaling.py
 
 Future development will explore:
 
-- European put pricing
-- Option Greeks
 - Variance-reduction techniques
 - Value at Risk and Expected Shortfall
 - Additional stochastic models
