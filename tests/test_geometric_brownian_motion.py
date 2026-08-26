@@ -4,6 +4,7 @@ import pytest
 from quantmc.models.geometric_brownian_motion import (
     simulate_antithetic_terminal_price_pairs,
     simulate_terminal_prices,
+    simulate_terminal_prices_with_normal_draws,
 )
 
 
@@ -101,3 +102,27 @@ def test_antithetic_pair_product_is_deterministic() -> None:
         expected_product,
         rel=1e-12,
     )
+
+
+def test_terminal_prices_can_return_normal_draws() -> None:
+    prices, normal_draws = simulate_terminal_prices_with_normal_draws(
+        spot=100.0,
+        rate=0.05,
+        volatility=0.2,
+        maturity=1.0,
+        simulations=10_000,
+        seed=42,
+    )
+
+    standard_prices = simulate_terminal_prices(
+        spot=100.0,
+        rate=0.05,
+        volatility=0.2,
+        maturity=1.0,
+        simulations=10_000,
+        seed=42,
+    )
+
+    assert prices.shape == (10_000,)
+    assert normal_draws.shape == (10_000,)
+    assert prices == pytest.approx(standard_prices)
