@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -48,6 +49,7 @@ def main() -> None:
     estimates = create_empty_results()
     standard_errors = create_empty_results()
     analytical_values: dict[str, float] = {}
+    rows: list[dict[str, object]] = []
 
     print("Monte Carlo Greeks Convergence Analysis")
     print("=" * 92)
@@ -88,6 +90,25 @@ def main() -> None:
                 estimates[key].append(greek_comparison.monte_carlo.estimate)
                 standard_errors[key].append(greek_comparison.monte_carlo.standard_error)
 
+                lower, upper = greek_comparison.monte_carlo.confidence_interval
+
+                rows.append(
+                    {
+                        "simulations": int(simulations),
+                        "option_type": option_name,
+                        "greek": greek_name,
+                        "analytical_value": (greek_comparison.analytical_value),
+                        "monte_carlo_estimate": (greek_comparison.monte_carlo.estimate),
+                        "absolute_error": (greek_comparison.absolute_error),
+                        "standard_error": (greek_comparison.monte_carlo.standard_error),
+                        "confidence_interval_lower": lower,
+                        "confidence_interval_upper": upper,
+                        "contains_analytical_value": (
+                            greek_comparison.contains_analytical_value
+                        ),
+                    }
+                )
+
                 print(
                     f"{simulations:>12,}"
                     f"{option_name.capitalize():>10}"
@@ -111,6 +132,48 @@ def main() -> None:
         standard_errors=standard_errors,
         output_dir=output_dir,
     )
+
+    data_dir = Path("docs/data")
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    write_results_csv(
+        rows=rows,
+        output_dir=data_dir,
+    )
+
+
+def write_results_csv(
+    rows: list[dict[str, object]],
+    output_dir: Path,
+) -> None:
+    """Write the convergence results to a reproducible CSV file."""
+
+    output_path = output_dir / "monte_carlo_greeks_convergence.csv"
+
+    fieldnames = [
+        "simulations",
+        "option_type",
+        "greek",
+        "analytical_value",
+        "monte_carlo_estimate",
+        "absolute_error",
+        "standard_error",
+        "confidence_interval_lower",
+        "confidence_interval_upper",
+        "contains_analytical_value",
+    ]
+
+    with output_path.open(
+        mode="w",
+        newline="",
+        encoding="utf-8",
+    ) as csv_file:
+        writer = csv.DictWriter(
+            csv_file,
+            fieldnames=fieldnames,
+        )
+        writer.writeheader()
+        writer.writerows(rows)
 
 
 def create_convergence_figure(
