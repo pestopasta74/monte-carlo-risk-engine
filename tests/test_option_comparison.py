@@ -5,11 +5,14 @@ import pytest
 from quantmc.analysis import (
     EuropeanOptionAnalysis,
     EuropeanOptionParameters,
+    GreekEstimateComparison,
+    OptionGreekComparison,
     OptionGreeks,
     PricingComparison,
     analyze_european_option,
 )
 from quantmc.pricing.monte_carlo import MonteCarloResult
+from quantmc.pricing.monte_carlo_greeks import MonteCarloGreekResult
 
 
 def test_european_option_parameters_store_inputs() -> None:
@@ -86,6 +89,11 @@ def test_analyze_european_option_returns_complete_analysis() -> None:
     assert isinstance(analysis.put_pricing, PricingComparison)
     assert isinstance(analysis.call_greeks, OptionGreeks)
     assert isinstance(analysis.put_greeks, OptionGreeks)
+    assert isinstance(analysis.call_greek_comparison, OptionGreekComparison)
+    assert isinstance(analysis.put_greek_comparison, OptionGreekComparison)
+    assert isinstance(analysis.call_greek_comparison.delta, GreekEstimateComparison)
+    assert isinstance(analysis.call_greek_comparison.gamma, GreekEstimateComparison)
+    assert isinstance(analysis.call_greek_comparison.vega, GreekEstimateComparison)
 
 
 def test_analysis_contains_expected_analytical_values() -> None:
@@ -118,6 +126,18 @@ def test_analysis_contains_expected_analytical_values() -> None:
     assert analysis.put_greeks.delta == pytest.approx(
         -0.3632,
         abs=1e-4,
+    )
+    assert (
+        analysis.call_greek_comparison.delta.analytical_value
+        == analysis.call_greeks.delta
+    )
+    assert (
+        analysis.call_greek_comparison.gamma.analytical_value
+        == analysis.call_greeks.gamma
+    )
+    assert (
+        analysis.call_greek_comparison.vega.analytical_value
+        == analysis.call_greeks.vega
     )
 
 
@@ -187,3 +207,19 @@ def test_analysis_rejects_odd_simulation_count() -> None:
             simulations=9_999,
             seed=42,
         )
+
+
+def test_greek_estimate_comparison_calculates_error_and_coverage() -> None:
+    monte_carlo = MonteCarloGreekResult(
+        estimate=0.64,
+        standard_error=0.01,
+        confidence_interval=(0.62, 0.66),
+    )
+
+    comparison = GreekEstimateComparison(
+        analytical_value=0.6368,
+        monte_carlo=monte_carlo,
+    )
+
+    assert comparison.absolute_error == pytest.approx(0.0032)
+    assert comparison.contains_analytical_value
