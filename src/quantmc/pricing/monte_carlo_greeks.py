@@ -81,6 +81,38 @@ def _calculate_pathwise_vega_samples(
     return discount_factor * payoff_derivative * terminal_sensitivity
 
 
+def _calculate_finite_difference_gamma_samples(
+    terminal_prices: NDArray[np.float64],
+    spot: float,
+    strike: float,
+    rate: float,
+    maturity: float,
+    bump_size: float,
+    option_type: OptionType,
+) -> NDArray[np.float64]:
+    """Calculate central finite-difference Gamma samples."""
+
+    upward_prices = terminal_prices * (spot + bump_size) / spot
+    downward_prices = terminal_prices * (spot - bump_size) / spot
+
+    if option_type == "call":
+        upward_payoffs = np.maximum(upward_prices - strike, 0.0)
+        central_payoffs = np.maximum(terminal_prices - strike, 0.0)
+        downward_payoffs = np.maximum(downward_prices - strike, 0.0)
+    else:
+        upward_payoffs = np.maximum(strike - upward_prices, 0.0)
+        central_payoffs = np.maximum(strike - terminal_prices, 0.0)
+        downward_payoffs = np.maximum(strike - downward_prices, 0.0)
+
+    discount_factor = np.exp(-rate * maturity)
+
+    return (
+        discount_factor
+        * (upward_payoffs - 2.0 * central_payoffs + downward_payoffs)
+        / bump_size**2
+    )
+
+
 def _summarize_greek_samples(
     samples: NDArray[np.float64],
 ) -> MonteCarloGreekResult:
@@ -161,6 +193,41 @@ def _european_vega_mc_stats(
         rate=rate,
         volatility=volatility,
         maturity=maturity,
+        option_type=option_type,
+    )
+
+    return _summarize_greek_samples(samples)
+
+
+def _european_gamma_mc_stats(
+    spot: float,
+    strike: float,
+    rate: float,
+    volatility: float,
+    maturity: float,
+    simulations: int,
+    seed: int | None,
+    bump_size: float,
+    option_type: OptionType,
+) -> MonteCarloGreekResult:
+    """Run the shared finite-difference Monte Carlo Gamma workflow."""
+
+    terminal_prices = simulate_terminal_prices(
+        spot=spot,
+        rate=rate,
+        volatility=volatility,
+        maturity=maturity,
+        simulations=simulations,
+        seed=seed,
+    )
+
+    samples = _calculate_finite_difference_gamma_samples(
+        terminal_prices=terminal_prices,
+        spot=spot,
+        strike=strike,
+        rate=rate,
+        maturity=maturity,
+        bump_size=bump_size,
         option_type=option_type,
     )
 
@@ -255,5 +322,55 @@ def european_put_vega_mc_stats(
         maturity=maturity,
         simulations=simulations,
         seed=seed,
+        option_type="put",
+    )
+
+
+def european_call_gamma_mc_stats(
+    spot: float,
+    strike: float,
+    rate: float,
+    volatility: float,
+    maturity: float,
+    simulations: int = 100_000,
+    seed: int | None = None,
+    bump_size: float = 1.0,
+) -> MonteCarloGreekResult:
+    """Estimate European call Gamma using finite-difference Monte Carlo."""
+
+    return _european_gamma_mc_stats(
+        spot=spot,
+        strike=strike,
+        rate=rate,
+        volatility=volatility,
+        maturity=maturity,
+        simulations=simulations,
+        seed=seed,
+        bump_size=bump_size,
+        option_type="call",
+    )
+
+
+def european_put_gamma_mc_stats(
+    spot: float,
+    strike: float,
+    rate: float,
+    volatility: float,
+    maturity: float,
+    simulations: int = 100_000,
+    seed: int | None = None,
+    bump_size: float = 1.0,
+) -> MonteCarloGreekResult:
+    """Estimate European put Gamma using finite-difference Monte Carlo."""
+
+    return _european_gamma_mc_stats(
+        spot=spot,
+        strike=strike,
+        rate=rate,
+        volatility=volatility,
+        maturity=maturity,
+        simulations=simulations,
+        seed=seed,
+        bump_size=bump_size,
         option_type="put",
     )
