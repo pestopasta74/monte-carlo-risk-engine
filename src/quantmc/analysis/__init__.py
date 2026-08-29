@@ -1,6 +1,8 @@
 from quantmc.analysis.option_comparison import (
     EuropeanOptionAnalysis,
     EuropeanOptionParameters,
+    GreekEstimateComparison,
+    OptionGreekComparison,
     OptionGreeks,
     PricingComparison,
     analyze_european_option,
@@ -9,6 +11,8 @@ from quantmc.analysis.option_comparison import (
 __all__ = [
     "EuropeanOptionAnalysis",
     "EuropeanOptionParameters",
+    "GreekEstimateComparison",
+    "OptionGreekComparison",
     "OptionGreeks",
     "PricingComparison",
     "analyze_european_option",
