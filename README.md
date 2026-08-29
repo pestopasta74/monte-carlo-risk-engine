@@ -154,14 +154,7 @@ $$
 
 The pathwise call Delta estimator is therefore
 
-$$
-\widehat{\Delta}_{\mathrm{call}}
-=
-\frac{e^{-rT}}{N}
-\sum_{i=1}^{N}
-\mathbf{1}_{\{S_T^{(i)}>K\}}
-\frac{S_T^{(i)}}{S_0},
-$$
+$$ \widehat{\Delta}_{\mathrm{call}} = \frac{e^{-rT}}{N} \sum_{i=1}^{N} \mathbf{1}_{\{S_T^{(i)}>K\}} \frac{S_T^{(i)}}{S_0}, $$
 
 with the corresponding put estimator using
 $-\mathbf{1}_{\{S_T^{(i)}<K\}}$.
@@ -170,11 +163,7 @@ $-\mathbf{1}_{\{S_T^{(i)}<K\}}$.
 
 Differentiating the exact GBM solution with respect to volatility gives
 
-$$
-\frac{\partial S_T}{\partial \sigma}
-=
-S_T\left(\sqrt{T}Z-\sigma T\right).
-$$
+$$ \frac{\partial S_T}{\partial \sigma} = S_T\left(\sqrt{T}Z-\sigma T\right). $$
 
 Combining this terminal-price sensitivity with the derivative of the call or put payoff produces a direct pathwise Vega estimator.
 
@@ -182,15 +171,7 @@ Combining this terminal-price sensitivity with the derivative of the call or put
 
 The European option payoff is not differentiable at the strike, so Gamma is estimated using a central finite difference:
 
-$$
-\widehat{\Gamma}
-=
-\frac{
-\widehat{V}(S_0+h)
--2\widehat{V}(S_0)
-+\widehat{V}(S_0-h)
-}{h^2}.
-$$
+$$ \widehat{\Gamma} = \frac{ \widehat{V}(S_0+h) -2\widehat{V}(S_0) +\widehat{V}(S_0-h)}{h^2}. $$
 
 All three valuations use common random numbers. Reusing the same Gaussian draws isolates the effect of the spot perturbation and substantially reduces the noise that would arise from independent simulations.
 
