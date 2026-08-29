@@ -20,9 +20,13 @@ The current version includes:
 - Analytical validation against Black–Scholes
 - Analytical Delta, Gamma, Vega, Theta, and Rho
 - Finite-difference validation of every Greek
+- Pathwise Monte Carlo estimators for Delta and Vega
+- Common-random-number finite-difference Monte Carlo Gamma
+- Monte Carlo Greek standard errors and 95% confidence intervals
 - Analytical and Monte Carlo put-call parity tests
 - Monte Carlo convergence analysis
 - Unified analytical, standard Monte Carlo, and antithetic comparison engine
+- Reproducible CSV export of Greek convergence results
 - Empirical verification of the expected $N^{-1/2}$ standard-error scaling
 - Automated tests and code-quality checks
 
@@ -136,6 +140,84 @@ Sensitivity conventions:
 - Vega is reported per unit change in volatility.
 - Rho is reported per unit change in the continuously compounded risk-free rate.
 
+## Monte Carlo Greeks
+
+The project also estimates Delta, Gamma, and Vega from simulated terminal prices and compares each estimator with its analytical Black–Scholes benchmark.
+
+### Pathwise Delta
+
+Because the GBM terminal price is proportional to the initial spot,
+
+$$
+\frac{\partial S_T}{\partial S_0}=\frac{S_T}{S_0}.
+$$
+
+The pathwise call Delta estimator is therefore
+
+$$
+\widehat{\Delta}_{\mathrm{call}}
+=
+\frac{e^{-rT}}{N}
+\sum_{i=1}^{N}
+\mathbf{1}_{\{S_T^{(i)}>K\}}
+\frac{S_T^{(i)}}{S_0},
+$$
+
+with the corresponding put estimator using
+$-\mathbf{1}_{\{S_T^{(i)}<K\}}$.
+
+### Pathwise Vega
+
+Differentiating the exact GBM solution with respect to volatility gives
+
+$$
+\frac{\partial S_T}{\partial \sigma}
+=
+S_T\left(\sqrt{T}Z-\sigma T\right).
+$$
+
+Combining this terminal-price sensitivity with the derivative of the call or put payoff produces a direct pathwise Vega estimator.
+
+### Finite-difference Gamma
+
+The European option payoff is not differentiable at the strike, so Gamma is estimated using a central finite difference:
+
+$$
+\widehat{\Gamma}
+=
+\frac{
+\widehat{V}(S_0+h)
+-2\widehat{V}(S_0)
++\widehat{V}(S_0-h)
+}{h^2}.
+$$
+
+All three valuations use common random numbers. Reusing the same Gaussian draws isolates the effect of the spot perturbation and substantially reduces the noise that would arise from independent simulations.
+
+Each Monte Carlo Greek result includes the estimate, estimator standard error, and a 95% confidence interval.
+
+### Greek convergence
+
+![Monte Carlo Greek convergence](docs/figures/monte_carlo_greeks_convergence.png)
+
+Across simulation budgets from 2,000 to 600,000 paths, the call and put Delta, Gamma, and Vega estimates converge towards their analytical Black–Scholes values. The confidence intervals narrow as the simulation budget increases, and every analytical benchmark lies inside the corresponding 95% confidence interval at 600,000 simulations.
+
+### Greek estimator standard errors
+
+![Monte Carlo Greek standard-error scaling](docs/figures/monte_carlo_greeks_standard_error.png)
+
+The measured standard errors closely track the theoretical $N^{-1/2}$ reference slope. Increasing the simulation count from 2,000 to 600,000 multiplies the sample size by 300, predicting an error reduction of $\sqrt{300}\approx17.32$.
+
+The observed reductions include:
+
+| Estimator | SE at 2,000 | SE at 600,000 | Reduction factor |
+| --- | ---: | ---: | ---: |
+| Call Delta | 0.012819 | 0.000744 | 17.23× |
+| Gamma | 0.002504 | 0.000139 | 18.01× |
+| Call Vega | 1.600593 | 0.097863 | 16.36× |
+
+The complete experiment output is stored in [`docs/data/monte_carlo_greeks_convergence.csv`](docs/data/monte_carlo_greeks_convergence.csv), allowing the figures and numerical claims to be reproduced directly from the recorded results.
+
 ## Antithetic Variance Reduction
 
 The antithetic estimator draws $Z\sim\mathcal{N}(0,1)$ and pairs each draw with $-Z$. This produces the terminal-price pair
@@ -173,7 +255,9 @@ The comparison engine evaluates one immutable set of European option parameters 
 - absolute pricing errors;
 - estimator standard errors and confidence intervals;
 - standard-error and variance-reduction factors;
-- analytical call and put Greeks.
+- analytical call and put Greeks;
+- Monte Carlo Delta, Gamma, and Vega estimates;
+- Greek estimation errors, standard errors, and confidence-interval coverage.
 
 Standard and antithetic estimators are compared using equal terminal-price evaluation budgets. If the standard estimator uses $N$ simulated prices, the antithetic estimator uses $N/2$ pairs and therefore evaluates the same total number of terminal prices.
 
@@ -204,14 +288,19 @@ For the benchmark call, antithetic sampling approximately halved the estimator v
 │   └── workflows/
 │       └── ci.yml
 ├── docs/
+│   ├── data/
+│   │   └── monte_carlo_greeks_convergence.csv
 │   └── figures/
 │       ├── monte_carlo_convergence.png
+│       ├── monte_carlo_greeks_convergence.png
+│       ├── monte_carlo_greeks_standard_error.png
 │       ├── standard_error_scaling.png
 │       ├── variance_reduction_convergence.png
 │       └── variance_reduction_standard_error.png
 ├── examples/
 │   ├── convergence_analysis.py
 │   ├── error_scaling.py
+│   ├── greeks_convergence_analysis.py
 │   ├── option_comparison.py
 │   └── variance_reduction_analysis.py
 ├── src/
@@ -227,7 +316,8 @@ For the benchmark call, antithetic sampling approximately halved the estimator v
 │       │   ├── __init__.py
 │       │   ├── black_scholes.py
 │       │   ├── greeks.py
-│       │   └── monte_carlo.py
+│       │   ├── monte_carlo.py
+│       │   └── monte_carlo_greeks.py
 │       └── risk/
 │           └── __init__.py
 ├── tests/
@@ -235,6 +325,7 @@ For the benchmark call, antithetic sampling approximately halved the estimator v
 │   ├── test_geometric_brownian_motion.py
 │   ├── test_greeks.py
 │   ├── test_monte_carlo.py
+│   ├── test_monte_carlo_greeks.py
 │   └── test_option_comparison.py
 ├── .gitignore
 ├── LICENSE
@@ -289,13 +380,21 @@ Generate the standard-versus-antithetic comparison figures:
 python examples/variance_reduction_analysis.py
 ```
 
+Generate the Monte Carlo Greek convergence figures and CSV data:
+
+```bash
+python examples/greeks_convergence_analysis.py
+```
+
 ## Roadmap
 
 Future development will explore:
 
-- Greek profiles across spot price and other model parameters
-- Exportable comparison tables and reports
+- Greek profiles across spot price, volatility, and maturity
+- Antithetic variance reduction for Monte Carlo Greek estimators
+- A reproducible technical paper describing the methods and results
 - Value at Risk and Expected Shortfall
+- Historical-data experiments and model backtesting
 - Additional stochastic models
 - Performance comparisons between numerical approaches
 
